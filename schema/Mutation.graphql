@@ -5,10 +5,10 @@ type Mutation {
         idade: Int
     ): Usuario!
 
-    excluirUsuario(id: Int): Usuario
+    excluirUsuario(id: Int!): Usuario
 
     alterarUsuario(
-        id: Int
+        id: Int!
         nome: String
         email: String
         idade: Int
