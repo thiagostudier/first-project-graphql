@@ -1,3 +1,10 @@
-npm i
+# Escopo e objetivo
 
-npm start
+Projeto desenvolvido no Curso "GraphQL: Criando APIs Profissionais e Flexíveis".
+
+Aprendendo meus primeiros conceitos com GraphQL: Mutations, Querys.
+
+## Iniciando...
+
+- `git clone https://github.com/thiagostudier/first-project-graphql`
+- `cd first-project-graphql`
