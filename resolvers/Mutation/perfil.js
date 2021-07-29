@@ -1,60 +1,50 @@
-const { perfis, proximoId } = require('../../data/db');
+const db = require('../../config/db')
 
-// FUNÇÃO PARA BUSCAR O USUARIO
-function indicePerfil(filtro){
-    // SE NÃO FOR PASSADO UM FILTRO
-    if(!filtro) return -1;
-    // PEGAR OS DADOS DE ID E EMAIL
-    const { id } = filtro
-    if(id){
-        return perfis.findIndex(u => u.id === id)
-    }
-    // SE NÃO ENCONTRAR O USUARIO
-    return -1
-}
+const { perfil: obterPerfil } = require('../Query/perfil'); //IMPORTANDO FUNÇÃO DE PEGAR PERFIL
 
 module.exports = {
-
-    // MINHAS RESOLVERS
-
-    novoPerfil(_, { dados }){
-
-        // VALIDAR SE NOME EXISTE
-        const nomeExistente = perfis.some(u => u.nome === dados.nome)
-        if(nomeExistente){
-            throw new Error('Nome já cadastrado!');
+    async novoPerfil(_, { dados }) {
+        try {
+            const [ id ] = await db('perfis').insert(dados);
+            return db('perfis')
+                .where({ id })
+                .first();
+        } catch(e) {
+            throw new Error(e.sqlMessage)
         }
-
-        const novo = {
-            id: proximoId(),
-            ...dados,
+    },
+    async excluirPerfil(_, { filtro }) {
+        try {
+            const perfil = await obterPerfil(_, { filtro }); //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
+            if(perfil) {
+                const { id } = perfil //PEGAR ID DO PERFIL
+                // PEGAR OS DADOS DE USUARIOS_PERFIS VINCULADOS AO PERFIL E APAGAR
+                await db('usuarios_perfis')
+                    .where({ perfil_id: id })
+                    .delete()
+                // APAGAR O PERFIL
+                await db('perfis')
+                    .where({ id })
+                    .delete();
+            }
+            return perfil;
+        } catch(e) {
+            throw new Error(e.sqlMessage)
         }
-
-        perfis.push(novo)
-
-        return novo;
     },
-
-    excluirPerfil(_, { filtro }){
-        // PEGAR ITEM
-        const i = indicePerfil(filtro)
-        // VALIDAR SE EXISTE
-        if(i < 0) return null
-        // EXCLUIR
-        const excluidos = perfis.splice(i, 1)
-        // RETORNAR
-        return excluidos ? excluidos[0] : null
-    },
-
-    alterarPerfil(_, { filtro, dados }) {
-        // PEGAR USUARIO
-        const i = indicePerfil(filtro)
-        // VALIDAR SE EXISTE
-        if(i < 0) return null
-        // ALTERAR DADOS
-        perfis[i].nome = dados.nome ? dados.nome : perfis[i].nome;
-        // RETORNAR DADO ALTERADO
-        return perfis[i]
+    async alterarPerfil(_, { filtro, dados }) {
+        try {
+            const perfil = await obterPerfil(_, { filtro }); //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
+            if(perfil) {
+                const { id } = perfil //PEGAR ID DO PERFIL
+                // ATUALIZAR PERFIL
+                await db('perfis')
+                    .where({ id })
+                    .update(dados);
+            }
+            return { ...perfil, ...dados};
+        } catch(e) {
+            throw new Error(e.sqlMessage)
+        }
     }
-
 }
