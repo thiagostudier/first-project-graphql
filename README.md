@@ -13,7 +13,7 @@ Integrando GraphQL e Knex.
 
 ### Rodar projeto
 
-- `npm start`
+- `npm start` - http://localhost:4000/
 
 ### Comandos GraphQL
 
