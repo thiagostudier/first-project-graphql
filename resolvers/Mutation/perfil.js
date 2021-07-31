@@ -3,7 +3,10 @@ const db = require('../../config/db')
 const { perfil: obterPerfil } = require('../Query/perfil'); //IMPORTANDO FUNÇÃO DE PEGAR PERFIL
 
 module.exports = {
-    async novoPerfil(_, { dados }) {
+    async novoPerfil(_, { dados }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarAdmin()
+
         try {
             const [ id ] = await db('perfis').insert(dados);
             return db('perfis')
@@ -13,7 +16,10 @@ module.exports = {
             throw new Error(e.sqlMessage)
         }
     },
-    async excluirPerfil(_, { filtro }) {
+    async excluirPerfil(_, { filtro }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarAdmin()
+
         try {
             const perfil = await obterPerfil(_, { filtro }); //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
             if(perfil) {
@@ -32,7 +38,10 @@ module.exports = {
             throw new Error(e.sqlMessage)
         }
     },
-    async alterarPerfil(_, { filtro, dados }) {
+    async alterarPerfil(_, { filtro, dados }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarAdmin()
+        
         try {
             const perfil = await obterPerfil(_, { filtro }); //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
             if(perfil) {

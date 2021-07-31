@@ -1,18 +1,44 @@
+const bcrypt = require('bcrypt-nodejs');
+
 const db = require('../../config/db')
 
 const { perfil: obterPerfil } = require('../Query/perfil'); //IMPORTANDO FUNÇÃO DE PEGAR PERFIL
 const { usuario: obterUsuario } = require('../Query/usuario'); //IMPORTANDO FUNÇÃO DE PEGAR PERFIL
 
-module.exports = {
-    async novoUsuario(_, { dados }) {
+const mutations = {
+    async registrarUsuario(_, { dados }){
+        // REUTILIZANDO O CÓDIGO DE NOVO USUARIO
+        return mutations.novoUsuario(_, {
+            dados: {
+                nome: dados.nome,
+                email: dados.email,
+                senha: dados.senha
+            }
+        })
+    },
+    async novoUsuario(_, { dados }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarAdmin()
+
         try {
             const idsPerfis = [] //CRIAR ARRAY VAZIO 
-            if(dados.perfis){ //SE HOUVEREM PERFIS 
-                for(let filtro of dados.perfis){ //PERCORRER PERFIS
-                    const perfil = await obterPerfil(_, {filtro}) //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
-                    if(perfil) idsPerfis.push(perfil.id) //SE HOUVER O PERFIL, ADICIONAR O ID NO ARRAY
-                }
+
+            // SE NÃO HOUVER PERFIS
+            if(!dados.perfis || !dados.perfis.length){
+                dados.perfis = [{
+                    nome: 'comum'
+                }]
             }
+            //PERCORRER PERFIS
+            for(let filtro of dados.perfis){
+                const perfil = await obterPerfil(_, {filtro}) //PEGAR PERFIL PELA FUNÇÃO IMPORTADA
+                if(perfil) idsPerfis.push(perfil.id) //SE HOUVER O PERFIL, ADICIONAR O ID NO ARRAY
+            }
+
+            // CRIPTOGRAFAR SENHA
+            const salt = bcrypt.genSaltSync()
+            dados.senha = bcrypt.hashSync(dados.senha, salt);
+
             // REMOVER OS DADOS DOS PERFIS ADICIONADOS NO "dados"
             delete dados.perfis;
             // CRIAR USUÁRIO
@@ -32,7 +58,10 @@ module.exports = {
             throw new Error(e.sqlMessage)
         }
     },
-    async excluirUsuario(_, { filtro }) {
+    async excluirUsuario(_, { filtro }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarAdmin()
+
         try {
             const usuario = await obterUsuario(_, {filtro}); //PEGAR USUARIO PELA FUNÇÃO IMPORTADA
             if(usuario){ 
@@ -52,13 +81,16 @@ module.exports = {
             throw new Error(e.sqlMessage)
         }
     },
-    async alterarUsuario(_, { filtro, dados }) {
+    async alterarUsuario(_, { filtro, dados }, ctx) {
+        // VALIDAR SE O USUARIO É ADMIN
+        ctx && ctx.validarUsuarioFiltro(filtro)
+
         try {
             const usuario = await obterUsuario(_, {filtro}); //PEGAR USUARIO PELA FUNÇÃO IMPORTADA
             if(usuario){ 
                 const { id } = usuario
                 // SE HOUVEREM PERFIS PARA EDITAR
-                if(dados.perfis){
+                if(ctx.admin && dados.perfis){
                     // APAGAR TODOS OS RELACIONAMENTOS ENTRE OS PERFIS
                     await db('usuarios_perfis')
                         .where( {usuario_id: id} )
@@ -75,6 +107,12 @@ module.exports = {
                             });
                     }
                 }
+                // SE A SENHA FOR SETADA
+                if(dados.senha){
+                    // CRIPTOGRAFAR SENHA
+                    const salt = bcrypt.genSaltSync()
+                    dados.senha = bcrypt.hashSync(dados.senha, salt);
+                }
                 // REMOVER OS DADOS DOS PERFIS ADICIONADOS NO "dados"
                 delete dados.perfis;
                 // ATUALIZAR DADOS
@@ -89,3 +127,5 @@ module.exports = {
         }
     }
 }
+
+module.exports = mutations;

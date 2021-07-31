@@ -15,6 +15,22 @@ Integrando GraphQL e Knex.
 
 - `npm start` - http://localhost:4000/
 
+## Comandos Knex
+
+```
+npm init -y
+
+npm i -s knex mysql
+
+npx knex init
+
+npx knex migrate:make tabela_perfis
+
+npx knex migrate:latest
+npx knex migrate:rollback
+
+```
+
 ### Comandos GraphQL
 
 Queries
@@ -145,18 +161,4 @@ Mutations
 
 ```
 
-## Comandos Knex
 
-```
-npm init -y
-
-npm i -s knex mysql
-
-npx knex init
-
-npx knex migrate:make tabela_perfis
-
-npx knex migrate:latest
-npx knex migrate:rollback
-
-```
