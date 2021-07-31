@@ -1,13 +1,13 @@
 const db = require('../../config/db')
 
 module.exports = {
-    async perfis() {
+    async perfis(parent, args, ctx) {
         // VALIDAR SE O USUARIO É ADMIN
         ctx && ctx.validarAdmin()
 
         return db('perfis')
     },
-    async perfil(_, { filtro }) {
+    async perfil(_, { filtro }, ctx) {
         // VALIDAR SE O USUARIO É ADMIN
         ctx && ctx.validarAdmin()
         
